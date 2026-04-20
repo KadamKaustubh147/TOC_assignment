@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Automata and PDA Simulator</title>
+  <meta name="description" content="Build and simulate Epsilon-NFA, NFA, DFA, and Pushdown Automata." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Automata and PDA Simulator</h1>
+      <p class="intro">Build automata from regular expressions or pushdown automata from language definitions. Simulate input strings and convert between machine types.</p>
+    </header>
+
+    <nav class="mode-tabs">
+      <button class="mode-tab active" data-mode="epsilon-nfa">Epsilon-NFA</button>
+      <button class="mode-tab" data-mode="nfa">NFA</button>
+      <button class="mode-tab" data-mode="pda">PDA</button>
+    </nav>
+
+    <!-- Regex Panel -->
+    <section id="regexPanel" class="panel">
+      <div class="row">
+        <input id="regexInput" type="text" placeholder="Enter regex, e.g. a(a|b)*b" value="a(a|b)*b" />
+        <button id="buildBtn">Build Epsilon-NFA</button>
+        <button id="resetBtn" class="btn-outline" disabled>Reset</button>
+        <button id="convertBtn" disabled>Convert to DFA</button>
+      </div>
+      <div class="row">
+        <input id="stringInput" type="text" placeholder="Input string to simulate" />
+        <button id="simulateNfaBtn" disabled>Simulate</button>
+        <button id="simulateDfaBtn" disabled>Simulate DFA</button>
+      </div>
+      <div class="meta-grid">
+        <div><span class="label">Regex with concat:</span> <span id="concatView">-</span></div>
+        <div><span class="label">Postfix:</span> <span id="postfixView">-</span></div>
+        <div><span class="label">Result:</span> <span id="resultView">-</span></div>
+      </div>
+      <div id="stepDescription" class="step-description">Enter a regex and click Build.</div>
+    </section>
+
+    <!-- PDA Panel -->
+    <section id="pdaPanel" class="panel" style="display:none;">
+      <div class="pda-type-row">
+        <label class="radio-label"><input type="radio" name="pdaType" value="exponent" checked /> Exponent notation</label>
+        <label class="radio-label"><input type="radio" name="pdaType" value="word" /> Word notation</label>
+      </div>
+      <div id="exponentInputs">
+        <div class="row"><input id="langInput" type="text" placeholder="Language, e.g.  a^n b^n  or  a^2n b^n" /></div>
+        <div class="row"><input id="constraintInput" type="text" placeholder="Constraints, e.g.  n >= 1  (default: n >= 0)" /></div>
+      </div>
+      <div id="wordInputs" style="display:none;">
+        <div class="row">
+          <select id="wordPattern">
+            <option value="wcwR">wcw^R &mdash; w, then c, then w reversed (w over {a,b}*)</option>
+            <option value="wwR">ww^R &mdash; w then w reversed (w over {a,b}*)</option>
+            <option value="equalAB">w such that #a = #b (w over {a,b}*)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <button id="buildPdaBtn">Build PDA</button>
+        <button id="resetPdaBtn" class="btn-outline" disabled>Reset</button>
+      </div>
+      <div class="row">
+        <input id="pdaStringInput" type="text" placeholder="Input string to simulate on PDA" />
+        <button id="simulatePdaBtn" disabled>Simulate PDA</button>
+      </div>
+      <div class="meta-grid">
+        <div><span class="label">Language:</span> <span id="langDescView">-</span></div>
+        <div><span class="label">Initial Stack:</span> <span id="initStackView">-</span></div>
+        <div><span class="label">Result:</span> <span id="pdaResultView">-</span></div>
+      </div>
+      <div id="pdaDescription" class="step-description">Choose a language type and define a language to build a PDA.</div>
+    </section>
+
+    <!-- Regex Guide -->
+    <div id="regexGuide" class="guide">
+      <h3>Regex Syntax Guide</h3>
+      <ul>
+        <li><b>a</b> &mdash; single character</li>
+        <li><b>ab</b> &mdash; concatenation</li>
+        <li><b>a|b</b> &mdash; union (a or b)</li>
+        <li><b>a*</b> &mdash; zero or more (Kleene star)</li>
+        <li><b>a+</b> &mdash; one or more (Kleene plus)</li>
+        <li><b>a?</b> &mdash; optional (zero or one)</li>
+        <li><b>(a|b)</b> &mdash; grouping</li>
+      </ul>
+      <h3>Examples</h3>
+      <div class="examples">
+        <button class="ex-btn" onclick="loadExample('a')">a</button>
+        <button class="ex-btn" onclick="loadExample('ab')">ab</button>
+        <button class="ex-btn" onclick="loadExample('a|b')">a|b</button>
+        <button class="ex-btn" onclick="loadExample('a*')">a*</button>
+        <button class="ex-btn" onclick="loadExample('a+')">a+</button>
+        <button class="ex-btn" onclick="loadExample('(a|b)*')">(a|b)*</button>
+        <button class="ex-btn" onclick="loadExample('a(a|b)*b')">a(a|b)*b</button>
+      </div>
+    </div>
+
+    <!-- PDA Guide -->
+    <div id="pdaGuide" class="guide" style="display:none;">
+      <h3>Language Notation Guide</h3>
+      <h4>Exponent Notation</h4>
+      <ul>
+        <li><b>a^n b^n</b> &mdash; n a's followed by n b's</li>
+        <li><b>a^2n b^n</b> &mdash; 2n a's followed by n b's (coefficients)</li>
+        <li><b>a^n b^m</b> &mdash; independent counts (different variables)</li>
+        <li>Constraints: <b>n &gt;= 1</b> or <b>n &gt;= 0</b> (default)</li>
+      </ul>
+      <h4>Word Notation</h4>
+      <ul>
+        <li><b>wcw^R</b> &mdash; string w, then c, then w reversed</li>
+        <li><b>ww^R</b> &mdash; string w then w reversed</li>
+        <li><b>w | #a = #b</b> &mdash; equal count of a and b</li>
+      </ul>
+      <h4>PDA Details</h4>
+      <ul>
+        <li>Transitions: <b>input, pop / push</b></li>
+        <li>Initial stack symbol: <b>z0</b></li>
+      </ul>
+      <h3>Examples</h3>
+      <div class="examples">
+        <button class="ex-btn" onclick="loadPdaExample('anbn')">a^n b^n</button>
+        <button class="ex-btn" onclick="loadPdaExample('a2nbn')">a^2n b^n</button>
+        <button class="ex-btn" onclick="loadPdaExample('anb2n')">a^n b^2n</button>
+        <button class="ex-btn" onclick="loadPdaExample('anbm')">a^n b^m</button>
+        <button class="ex-btn" onclick="loadPdaExample('wcwR')">wcw^R</button>
+        <button class="ex-btn" onclick="loadPdaExample('wwR')">ww^R</button>
+        <button class="ex-btn" onclick="loadPdaExample('equalAB')">#a = #b</button>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><span class="dot start"></span> Start</span>
+      <span><span class="dot accept"></span> Accept</span>
+      <span><span class="dot normal"></span> Normal</span>
+    </div>
+
+    <div id="canvasWrap" class="canvas-wrap">
+      <svg id="graphSvg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <!-- NFA/DFA Transition Table -->
+    <section id="nfaTransitionTableSection" class="panel transition-table-section" style="display:none;">
+      <h3>Transition Table</h3>
+      <div id="nfaTransitionTableContent"></div>
+    </section>
+
+    <!-- PDA Transition Table -->
+    <section id="pdaTransitionTableSection" class="panel transition-table-section" style="display:none;">
+      <h3>PDA Transition Table</h3>
+      <div id="transitionTableContent"></div>
+    </section>
+
+    <!-- PDA Simulation Trace -->
+    <section id="pdaSimTraceSection" class="panel transition-table-section" style="display:none;">
+      <h3>Simulation Trace (Stack)</h3>
+      <div id="simTraceContent"></div>
+    </section>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
